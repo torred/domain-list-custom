@@ -16,3 +16,7 @@
 
 # For Macos
 .DS_Store
+data
+publish
+.idea
+.vscode
