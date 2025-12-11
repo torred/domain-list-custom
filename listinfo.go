@@ -161,7 +161,7 @@ func (l *ListInfo) parseTypeRule(domain string, rule *router.Domain) error {
 
 func (l *ListInfo) parseAttribute(attr string) (*router.Domain_Attribute, error) {
 	if attr[0] != '@' {
-		return nil, errors.New("invalid attribute: " + attr)
+		return nil, errors.New(string(l.Name)+": invalid attribute: " + attr)
 	}
 	attr = attr[1:] // Trim out attribute prefix `@` character
 
