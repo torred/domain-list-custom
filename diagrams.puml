@@ -1,0 +1,80 @@
+@startuml
+' 类图
+class ListInfoMap {
+  +map[fileName]*ListInfo
+  +Marshal(path string) error
+  +FlattenAndGenUniqueDomainList() error
+  +ToProto(...)
+  +ToPlainText(...)
+  +ToGFWList(...)
+}
+
+class ListInfo {
+  +Name fileName
+  +FullTypeList
+  +DomainTypeList []string
+  +DomainTypeUniqueList []string
+  +KeywordTypeList
+  +RegexpTypeList
+  +AttributeRuleListMap map[string][]Rule
+  +InclusionAttributeMap map[fileName]map[attribute]bool
+  +GeoSite
+  +ProcessList(file) error
+  +Flatten(lm *ListInfoMap) error
+  +ToGeoSite(...)
+  +ToPlainText() []byte
+  +ToGFWList() []byte
+}
+
+class DomainTrie {
+  -root *node
+  +Insert(domain string) bool
+  +Reset()
+}
+
+class node {
+  -children map[string]*node
+  -leaf bool
+}
+
+class router_GeoSite
+class router_GeoSiteList
+
+ListInfoMap "1" *-- "*" ListInfo : contains
+ListInfo --> DomainTrie : uses
+DomainTrie *-- node
+ListInfo --> router_GeoSite : builds
+ListInfoMap --> router_GeoSiteList : aggregates
+@enduml
+
+@startuml
+' 序列图（简化）
+actor User
+participant main
+participant GetDataDir
+participant ListInfoMap
+participant Marshal
+participant ListInfo
+participant ProcessList
+participant FlattenAndGenUniqueDomainList
+participant Flatten
+participant DomainTrie
+participant ToProto
+participant router_GeoSiteList
+
+User -> main : run
+main -> GetDataDir : locate data dir
+main -> ListInfoMap : make/map init
+main -> ListInfoMap : for each file -> Marshal(path)
+Marshal -> ListInfo : NewListInfo()
+Marshal -> ListInfo : set Name
+Marshal -> ProcessList : ProcessList(file)
+ProcessList --> ListInfo : populate lists and maps
+main -> ListInfoMap : FlattenAndGenUniqueDomainList()
+FlattenAndGenUniqueDomainList -> ListInfo : determine levels and call Flatten(lm)
+Flatten -> DomainTrie : Insert domains (去重)
+DomainTrie --> Flatten : return unique domains
+main -> ListInfoMap : ToProto(excludeAttrs)
+ListInfoMap -> ListInfo : ToGeoSite()
+ListInfo -> router_GeoSiteList : append GeoSite
+@enduml
