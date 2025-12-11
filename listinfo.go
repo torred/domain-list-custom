@@ -13,8 +13,8 @@ import (
 )
 
 // ListInfo is the information structure of a single file in data directory.
-// It includes all types of rules of the file, as well as servel types of
-// sturctures of same items for convenience in later process.
+// It includes all types of rules of the file, as well as server types of
+// structures of same items for convenience in later process.
 type ListInfo struct {
 	Name                    fileName
 	HasInclusion            bool
@@ -119,7 +119,7 @@ func (l *ListInfo) parseInclusion(inclusion string) {
 	switch len(inclusionValSlice) {
 	case 1: // Inclusion without attribute
 		// Use '@' as the placeholder attribute for 'include:filename'
-		l.InclusionAttributeMap[filename] = append(l.InclusionAttributeMap[filename], attribute("@"))
+		l.InclusionAttributeMap[filename] = append(l.InclusionAttributeMap[filename], "@")
 	default: // Inclusion with attribute(s)
 		// support new inclusion syntax, eg: `include:google @cn @gfw`
 		for _, attr := range inclusionValSlice[1:] {
@@ -161,7 +161,7 @@ func (l *ListInfo) parseTypeRule(domain string, rule *router.Domain) error {
 
 func (l *ListInfo) parseAttribute(attr string) (*router.Domain_Attribute, error) {
 	if attr[0] != '@' {
-		return nil, errors.New(string(l.Name)+": invalid attribute: " + attr)
+		return nil, errors.New(string(l.Name) + ": invalid attribute: " + attr)
 	}
 	attr = attr[1:] // Trim out attribute prefix `@` character
 
@@ -255,17 +255,17 @@ func (l *ListInfo) Flatten(lm *ListInfoMap) error {
 
 // ToGeoSite converts every ListInfo into a router.GeoSite structure.
 // It also excludes rules with certain attributes in certain files that
-// user specified in command line when runing the program.
+// user specified in command line when running the program.
 func (l *ListInfo) ToGeoSite(excludeAttrs map[fileName]map[attribute]bool) {
-	geosite := new(router.GeoSite)
-	geosite.CountryCode = string(l.Name)
-	geosite.Domain = append(geosite.Domain, l.FullTypeList...)
-	geosite.Domain = append(geosite.Domain, l.DomainTypeUniqueList...)
-	geosite.Domain = append(geosite.Domain, l.RegexpTypeList...)
+	geoSite := new(router.GeoSite)
+	geoSite.CountryCode = string(l.Name)
+	geoSite.Domain = append(geoSite.Domain, l.FullTypeList...)
+	geoSite.Domain = append(geoSite.Domain, l.DomainTypeUniqueList...)
+	geoSite.Domain = append(geoSite.Domain, l.RegexpTypeList...)
 
 	for _, keywordRule := range l.KeywordTypeList {
 		if len(strings.TrimSpace(keywordRule.GetValue())) > 0 {
-			geosite.Domain = append(geosite.Domain, keywordRule)
+			geoSite.Domain = append(geoSite.Domain, keywordRule)
 		}
 	}
 
@@ -280,13 +280,13 @@ func (l *ListInfo) ToGeoSite(excludeAttrs map[fileName]map[attribute]bool) {
 				}
 			}
 			if ifKeep {
-				geosite.Domain = append(geosite.Domain, domain)
+				geoSite.Domain = append(geoSite.Domain, domain)
 			}
 		}
 	} else {
-		geosite.Domain = append(geosite.Domain, l.AttributeRuleUniqueList...)
+		geoSite.Domain = append(geoSite.Domain, l.AttributeRuleUniqueList...)
 	}
-	l.GeoSite = geosite
+	l.GeoSite = geoSite
 }
 
 // ToPlainText convert router.GeoSite structure to plaintext format.

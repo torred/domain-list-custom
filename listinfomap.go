@@ -19,7 +19,12 @@ func (lm *ListInfoMap) Marshal(path string) error {
 	if err != nil {
 		return err
 	}
-	defer file.Close()
+	defer func(file *os.File) {
+		err := file.Close()
+		if err != nil {
+			fmt.Println("Warning: failed to close file:", err)
+		}
+	}(file)
 
 	list := NewListInfo()
 	listName := fileName(strings.ToUpper(filepath.Base(path)))
@@ -44,27 +49,27 @@ func (lm *ListInfoMap) FlattenAndGenUniqueDomainList() error {
 		inclusionMap := make(map[fileName]bool)
 
 		if loopTimes == 0 {
-			for _, listinfo := range *lm {
-				if listinfo.HasInclusion {
+			for _, listInfo := range *lm {
+				if listInfo.HasInclusion {
 					continue
 				}
-				inclusionMap[listinfo.Name] = true
+				inclusionMap[listInfo.Name] = true
 			}
 		} else {
-			for _, listinfo := range *lm {
-				if !listinfo.HasInclusion || okayList[listinfo.Name] {
+			for _, listInfo := range *lm {
+				if !listInfo.HasInclusion || okayList[listInfo.Name] {
 					continue
 				}
 
 				var passTimes int
-				for filename := range listinfo.InclusionAttributeMap {
+				for filename := range listInfo.InclusionAttributeMap {
 					if !okayList[filename] {
 						break
 					}
 					passTimes++
 				}
-				if passTimes == len(listinfo.InclusionAttributeMap) {
-					inclusionMap[listinfo.Name] = true
+				if passTimes == len(listInfo.InclusionAttributeMap) {
+					inclusionMap[listInfo.Name] = true
 				}
 			}
 		}
@@ -97,9 +102,9 @@ func (lm *ListInfoMap) FlattenAndGenUniqueDomainList() error {
 // and returns a router.GeoSiteList
 func (lm *ListInfoMap) ToProto(excludeAttrs map[fileName]map[attribute]bool) *router.GeoSiteList {
 	protoList := new(router.GeoSiteList)
-	for _, listinfo := range *lm {
-		listinfo.ToGeoSite(excludeAttrs)
-		protoList.Entry = append(protoList.Entry, listinfo.GeoSite)
+	for _, listInfo := range *lm {
+		listInfo.ToGeoSite(excludeAttrs)
+		protoList.Entry = append(protoList.Entry, listInfo.GeoSite)
 	}
 	return protoList
 }
@@ -109,8 +114,8 @@ func (lm *ListInfoMap) ToProto(excludeAttrs map[fileName]map[attribute]bool) *ro
 func (lm *ListInfoMap) ToPlainText(exportListsMap []string) (map[string][]byte, error) {
 	filePlainTextBytesMap := make(map[string][]byte)
 	for _, filename := range exportListsMap {
-		if listinfo := (*lm)[fileName(strings.ToUpper(filename))]; listinfo != nil {
-			plaintextBytes := listinfo.ToPlainText()
+		if listInfo := (*lm)[fileName(strings.ToUpper(filename))]; listInfo != nil {
+			plaintextBytes := listInfo.ToPlainText()
 			filePlainTextBytesMap[filename] = plaintextBytes
 		} else {
 			fmt.Println("Notice: " + filename + ": no such exported list in the directory, skipped.")
@@ -123,8 +128,8 @@ func (lm *ListInfoMap) ToPlainText(exportListsMap []string) (map[string][]byte, 
 // that user wants in bytes format.
 func (lm *ListInfoMap) ToGFWList(togfwlist string) ([]byte, error) {
 	if togfwlist != "" {
-		if listinfo := (*lm)[fileName(strings.ToUpper(togfwlist))]; listinfo != nil {
-			return listinfo.ToGFWList(), nil
+		if listInfo := (*lm)[fileName(strings.ToUpper(togfwlist))]; listInfo != nil {
+			return listInfo.ToGFWList(), nil
 		}
 		return nil, errors.New("no such list: " + togfwlist)
 	}

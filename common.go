@@ -14,7 +14,7 @@ type attribute string
 
 // GetDataDir returns the path to the "data" directory used to generate lists.
 // Usage order:
-// 1. The datapath that user set when running the program
+// 1. The data-path that user set when running the program
 // 2. The default path "./data" (data directory in the current working directory) if exists
 // 3. The path to the data directory of project `v2fly/domain-list-community` in GOPATH mode
 func GetDataDir() string {
